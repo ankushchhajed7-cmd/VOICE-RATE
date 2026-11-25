@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.0.2 | 25 Nov 2026 | Header me version number + ⟳ Refresh button (cache saaf karke naya version laata hai, rates safe rehte hain) |
 | v1.0.1 | 25 Nov 2026 | Video test ke baad number fix: "14 से 60" = 1460 (से/सो = सौ), ₹ se number nahi tootta, Marathi "चौदाशे/एकशे" hundreds, galat likhe number (पासेस्टर = 65) ka andaaza, rate na sunaai de to saaf message, main screen par हिंदी/मराठी button |
 | v1.0.0 | 25 Nov 2026 | Pehla build: voice se rate set, purana rate replace, naya product seedha add, Maalik (PIN) / Helper mode, voice se bhav poochna + bolkar jawab, smart matching (Hindi + Marathi), galti sudhar se seekhna (alias), NEW tag + merge, backup/restore, Gold-Silver design, PWA offline |
 
@@ -25,6 +26,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 - NEW tag 7 din tak (ya maalik ke tap/edit karne tak). Duplicate ho to Edit → Merge.
 - Helper mode: koi edit/add/delete nahi. Maalik mode me wapas jaane ke liye PIN chahiye.
 - Repo ka naam VOICE-RATE.
+- Har app me upar version number + Refresh button (Ankush ka standing rule).
 
 - APK (apk-factory WebView) me browser voice + TTS nahi chalte. Abhi Chrome me "Add to Home screen" se chalana hai.
 
