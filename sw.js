@@ -1,5 +1,5 @@
-// VOICE RATE service worker — v1.0.0 — network-first, cache fallback (offline)
-const CACHE = 'voice-rate-v1.0.0';
+// VOICE RATE service worker — v1.0.1 — network-first, cache fallback (offline)
+const CACHE = 'voice-rate-v1.0.1';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

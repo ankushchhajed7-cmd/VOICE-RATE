@@ -3,7 +3,9 @@
 <head>
 <!--
   VOICE RATE — Ankush Kirana
-  Version: v1.0.0  (25 Nov 2026)
+  Version: v1.0.1  (25 Nov 2026)
+  v1.0.1 — नंबर की गलती ठीक: '14 से 60' = 1460 (से/सो = सौ), ₹ से नंबर नहीं टूटता, मराठी 'चौदाशे' जैसे शब्द,
+           गलत लिखे नंबर (पासेस्टर = 65) का अंदाज़ा, रेट न सुनाई दे तो साफ़ मैसेज, मेन स्क्रीन पर हिंदी/मराठी बटन.
   v1.0.0 — पहला build: बोलकर प्रोडक्ट + रेट, पुराना रेट replace, नया प्रोडक्ट सीधा add,
            मालिक (PIN) / हेल्पर मोड, बोलकर भाव पूछना + आवाज़ में जवाब, smart matching,
            गलती सुधार से सीखना, NEW टैग + merge, backup/restore, Gold-Silver डिज़ाइन.
@@ -84,6 +86,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
 .hint{margin-top:16px;font-size:14px;color:var(--silver2)}
 .hint b{color:var(--gold2)}
 .heard{min-height:22px;margin-top:8px;font-size:15px;color:var(--gold1);font-style:italic}
+.langSw{display:inline-flex;margin-top:12px;border:1px solid rgba(215,218,222,.35);border-radius:999px;overflow:hidden}
+.langSw button{border:none;background:transparent;color:var(--silver2);font:700 13px var(--sans);padding:7px 16px;cursor:pointer}
+.langSw button.on{background:var(--goldGrad);color:#1a1406}
 
 /* result card */
 .result{padding:16px;margin-bottom:14px;display:none}
@@ -198,6 +203,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
     </button>
     <div class="hint" id="hint">बटन दबाकर बोलें: <b>"शक्कर 45 किलो"</b></div>
     <div class="heard" id="heard"></div>
+    <div class="langSw" id="langSw"><button data-lang="hi-IN">हिंदी</button><button data-lang="mr-IN">मराठी</button></div>
   </div>
 
   <div class="result frame" id="result"></div>
@@ -208,7 +214,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
   </div>
   <input class="search" id="search" type="search" placeholder="🔍  प्रोडक्ट खोजें…" autocomplete="off">
   <div class="list" id="list"></div>
-  <div class="ver" id="ver">VOICE RATE v1.0.0</div>
+  <div class="ver" id="ver">VOICE RATE v1.0.1</div>
 </div>
 
 <div class="bottomBar" id="bottomBar">
@@ -220,7 +226,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
 
 <script>
 'use strict';
-const APP_VERSION = 'v1.0.0';
+const APP_VERSION = 'v1.0.1';
 
 // ===================== CORE-START (parsing + matching, no DOM) =====================
 const HI_NUMS = ['एक','दो','तीन','चार','पांच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस','बीस',
@@ -234,7 +240,7 @@ const MR_NUMS = ['एक','दोन','तीन','चार','पाच','स�
  'एकसष्ठ','बासष्ठ','त्रेसष्ठ','चौसष्ठ','पासष्ठ','सहासष्ठ','सदुसष्ठ','अडुसष्ठ','एकोणसत्तर','सत्तर','एक्काहत्तर','बाहत्तर','त्र्याहत्तर','चौऱ्याहत्तर','पंच्याहत्तर','शहात्तर','सत्त्याहत्तर','अठ्ठ्याहत्तर','एकोणऐंशी','ऐंशी',
  'एक्याऐंशी','ब्याऐंशी','त्र्याऐंशी','चौऱ्याऐंशी','पंच्याऐंशी','शहाऐंशी','सत्त्याऐंशी','अठ्ठ्याऐंशी','एकोणनव्वद','नव्वद','एक्याण्णव','ब्याण्णव','त्र्याण्णव','चौऱ्याण्णव','पंच्याण्णव','शहाण्णव','सत्त्याण्णव','अठ्ठ्याण्णव','नव्व्याण्णव'];
 const EXTRA_NUMS = {'पाँच':5,'छः':6,'छे':6,'छ':6,'बाइस':22,'तेइस':23,'अठाइस':28,'अट्ठाइस':28,'चौवालीस':44,'तिरेपन':53,'चौव्वन':54,'सरसठ':67,'उनासी':79,'नवासी':89,
- 'पंच्याहत्तर':75,'पंचाहत्तर':75,'चौर्याहत्तर':74,'शून्य':0,'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+ 'पंच्याहत्तर':75,'पंचाहत्तर':75,'चौर्याहत्तर':74,'पासेस्टर':65,'पासस्ट':65,'पासष्ठ':65,'पासेष्ट':65,'पैसठ':65,'बासस्ट':62,'चौसस्ट':64,'सहासस्ट':66,'एकसस्ट':61,'त्रेसस्ट':63,'पन्नास':50,'पचास':50,'पंचावन':55,'चालीस':40,'चाळीस':40,'नव्वद':90,'ऐंशी':80,'एंशी':80,'सत्तर':70,'शून्य':0,'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
  'twenty':20,'thirty':30,'forty':40,'fifty':50,'sixty':60,'seventy':70,'eighty':80,'ninety':90};
 const MUL_WORDS = {'सौ':100,'शंभर':100,'sau':100,'hundred':100,'हज़ार':1000,'हजार':1000,'hazar':1000,'thousand':1000};
 const HUND_WORDS = {'दोनशे':200,'तीनशे':300,'चारशे':400,'पाचशे':500,'सहाशे':600,'सातशे':700,'आठशे':800,'नऊशे':900,'दीडशे':150,'सव्वाशे':125,'अडीचशे':250,'साडेतीनशे':350};
@@ -247,6 +253,8 @@ const UNIT_WORDS = {'किलो':'किलो','kilo':'किलो','kg':'�
  'नग':'नग','पीस':'नग','piece':'नग','pc':'नग','पिस':'नग',
  'ग्राम':'ग्राम','gram':'ग्राम','gm':'ग्राम','ग्रॅम':'ग्राम',
  'दर्जन':'दर्जन','डझन':'दर्जन','dozen':'दर्जन','बोरी':'बोरी','पोते':'बोरी','पोता':'बोरी','बॉक्स':'बॉक्स','box':'बॉक्स','डिब्बा':'डिब्बा','डबा':'डिब्बा','बोतल':'बोतल','बाटली':'बोतल'};
+const RUPEE_WORDS = ['रुपये','रुपए','रुपया','रूपये','रुपय','रुपयांना','रुपयाला','रुपयाचा','रुपयाची','रु','रू','rs','rupees','rupee','rupaye','rupay'];
+const SAU_LIKE = ['से','सो','शे','सौं','सौ','सव','सेव'];
 const QUERY_WORDS = ['भाव','भाओ','रेट','rate','दर','कितना','कितने','कितनी','किती','क्या','काय','बताओ','बताइए','बताना','बता','सांगा','सांग','price','प्राइस','कीमत','किमत','कितने का','केवढा'];
 const STOP_WORDS = ['का','की','के','को','है','हैं','हे','आहे','रुपये','रुपए','रुपया','रूपये','रुपय','रुपयांना','रुपयाला','रुपयाचा','रु','रू','rs','rupees','rupee','rupaye','rupay','₹',
  'चा','ची','चे','ला','per','प्रति','वाला','वाली','वाले','नया','नवीन','अभी','आज','में','मे','मध्ये','and','और','आणि','तो','ठीक','ओके','ok','please','प्लीज','भैया','भाऊ','का भाव','ने','से','पर'];
@@ -257,6 +265,13 @@ const NUM_MAP = {};
   MR_NUMS.forEach((w,i)=>{NUM_MAP[numKey(w)]=i+1});
   for(const w in EXTRA_NUMS) NUM_MAP[numKey(w)]=EXTRA_NUMS[w];
 })();
+let NUM_KEYS=null;
+function numKeys(){ if(!NUM_KEYS){ NUM_KEYS=[]; HI_NUMS.forEach((w,i)=>NUM_KEYS.push({k:phoKey(w),v:i+1})); MR_NUMS.forEach((w,i)=>NUM_KEYS.push({k:phoKey(w),v:i+1})); } return NUM_KEYS; }
+function fuzzyNum(w){
+  const k=phoKey(w).replace(/ /g,''); if(k.length<3) return null;
+  let best=null; for(const n of numKeys()){ if(n.k.length<3) continue; const sim=1-lev(k,n.k)/Math.max(k.length,n.k.length); if(!best||sim>best.sim) best={sim,v:n.v}; }
+  return best&&best.sim>=.65 ? best.v : null;
+}
 function numKey(w){ // spelling-tolerant key for number words
   return String(w).toLowerCase().replace(/़/g,'').replace(/[ड़]/g,'ड').replace(/[ढ़]/g,'ढ').replace(/ँ/g,'ं')
     .replace(/[ऱ]/g,'र').replace(/‍|‌/g,'');
@@ -265,7 +280,7 @@ function normText(s){
   return String(s||'').toLowerCase()
     .replace(/[०-९]/g,d=>String('०१२३४५६७८९'.indexOf(d)))
     .replace(/(\d),(\d)/g,'$1$2')
-    .replace(/₹\s*/g,' ₹ ')
+    .replace(/₹/g,' ')
     .replace(/(\d)([^\d\s.])/g,'$1 $2').replace(/([^\d\s.₹])(\d)/g,'$1 $2')
     .replace(/[।|!?,;:"'()\[\]{}]/g,' ')
     .replace(/\.(?!\d)/g,' ').replace(/(^|\s)\.(\d)/g,'$1 0.$2')
@@ -281,6 +296,7 @@ function tokType(w){
   if(HALF_WORDS.includes(w)) return {type:'half'};
   if(LESS_WORDS.includes(w)) return {type:'less'};
   if(k in NUM_MAP) return {type:'num',v:NUM_MAP[k]};
+  if(w.length>2 && /(शे|से)$/.test(w)){ const pk=numKey(w.slice(0,-2)); if(pk in NUM_MAP) return {type:'hund',v:NUM_MAP[pk]*100}; }
   return null;
 }
 function parseRun(run){
@@ -304,6 +320,20 @@ function parseRun(run){
 function parseUtterance(text){
   const words=normText(text).split(' ').filter(Boolean);
   const toks=words.map(w=>({w,t:tokType(w)}));
+  const isNumT=t=>t&&(t.type==='num'||t.type==='hund'||t.type==='mul');
+  const strongAfter=i=>{const n=toks[i+1]; return n && (RUPEE_WORDS.includes(n.w) || (n.w in UNIT_WORDS));};
+  const rupeeAfter=i=>{const n=toks[i+1]; return n && RUPEE_WORDS.includes(n.w);};
+  for(let pass=0;pass<2;pass++){
+    toks.forEach((x,i)=>{
+      if(x.t) return;
+      const prev=toks[i-1], next=toks[i+1];
+      // "14 से 60" / "चौदह सो साठ" -> सौ
+      if(SAU_LIKE.includes(x.w) && prev && prev.t && prev.t.type==='num' && (!next || (next.t&&next.t.type==='num') || strongAfter(i) || RUPEE_WORDS.includes(next.w))){ x.t={type:'mul',v:100}; return; }
+      // badly-written number word right before रुपये/unit, or right after a number
+      if(STOP_WORDS.includes(x.w)||QUERY_WORDS.includes(x.w)||(x.w in UNIT_WORDS)||RUPEE_WORDS.includes(x.w)) return;
+      if(rupeeAfter(i) || (prev && isNumT(prev.t))){ const v=fuzzyNum(x.w); if(v) x.t={type:'num',v}; }
+    });
+  }
   // a lone "एक"/"one" between name words is rarely a price; still treated as number
   const runs=[]; let cur=null;
   toks.forEach((x,i)=>{
@@ -335,8 +365,9 @@ function parseUtterance(text){
     nameParts.push(w);
   });
   const name=nameParts.join(' ').replace(/\s+/g,' ').trim();
+  const asked=isQuery;
   if(rate===null || rate<=0) { rate=null; isQuery=true; }
-  return {name, rate, unit, isQuery};
+  return {name, rate, unit, isQuery, asked};
 }
 
 // ---- phonetic key: Devanagari -> simple roman, then sound-alike folding ----
@@ -526,7 +557,8 @@ function renderList(){
       ${isOwner()?`<button class="ed" data-edit="${p.id}" aria-label="Edit">✎</button>`:''}
     </div>`).join('');
 }
-function renderAll(){renderMode();renderStats();renderList()}
+function renderLang(){[...$('langSw').children].forEach(b=>b.classList.toggle('on',b.dataset.lang===(S.lang||'hi-IN')))}
+function renderAll(){renderMode();renderStats();renderList();renderLang()}
 
 // ---------------- result card ----------------
 let lastAction=null;
@@ -570,7 +602,17 @@ function handleSpeech(alts){
     showResult(`<span class="rTag miss">समझ नहीं आया</span><div class="rOld">सुना: "${esc(alts[0]||'')}"</div><div class="rOld" style="margin-top:6px">फिर से बोलें, जैसे: "शक्कर 45 किलो"</div>`);
     speak('समझ नहीं आया, फिर से बोलिए'); return;
   }
-  if(!r.isQuery && isOwner()) doSet(r); else doQuery(r);
+  if(!r.isQuery && isOwner()) doSet(r);
+  else if(isOwner() && !r.asked) noRate(r);
+  else doQuery(r);
+}
+function noRate(r){
+  const top=r.top, has=top&&top.score>=ASK_THRESHOLD;
+  showResult(`<span class="rTag miss">रेट सुनाई नहीं दिया</span>
+    <div class="rName">"${esc(r.alt)}"</div>
+    ${has?`<div class="rOld" style="margin-top:6px">${esc(top.p.name)} का अभी का रेट: <b class="goldText">₹${fmtRate(top.p.rate)}</b></div>`:''}
+    <div class="rOld" style="margin-top:6px">फिर से बोलें — नाम के बाद रेट, जैसे "शक्कर 65 किलो"। ज़्यादा गलत आए तो ऊपर भाषा बदलकर देखें।</div>`);
+  speak('रेट सुनाई नहीं दिया, फिर से बोलिए');
 }
 function doSet(r){
   const top=r.top;
@@ -583,6 +625,7 @@ function doSet(r){
     const same=prevRate===r.rate;
     showResult(cardFor(p,same?'रेट वही है':'रेट बदला','upd',
       `<div class="rOld">${same?'पहले भी यही रेट था':'पुराना: <s>₹'+fmtRate(prevRate)+(prevUnit?' / '+esc(prevUnit):'')+'</s> → हटाया'}</div>
+       <div class="rOld">सुना: "${esc(r.alt)}"</div>
        <div class="rBtns"><button class="btn ghost" data-act="undo">↩ Undo</button><button class="btn silver" data-act="change">गलत प्रोडक्ट? बदलें</button></div>`));
     speak(p.name+', नया रेट '+rateSpeech(p.rate)+(p.unit?' '+p.unit:''));
   } else {
@@ -805,7 +848,7 @@ function settingsModal(){
    <div class="ver">VOICE RATE ${APP_VERSION} · Ankush New Vision</div>
    <div class="mBtns"><button class="btn ghost" id="sClose">बंद करें</button></div>`);
   $('sClose').onclick=closeModal;
-  $('sLang').onchange=e=>{S.lang=e.target.value;save();toast('भाषा: '+(S.lang==='hi-IN'?'हिंदी':'मराठी'))};
+  $('sLang').onchange=e=>{S.lang=e.target.value;save();renderLang();toast('भाषा: '+(S.lang==='hi-IN'?'हिंदी':'मराठी'))};
   $('sSpeak').onchange=e=>{S.speak=e.target.checked;save()};
   $('sVRate').onchange=e=>{S.voiceRate=parseFloat(e.target.value);save()};
   $('sTest').onclick=()=>{const s=S.speak;S.speak=true;speak('शक्कर, पैंतालीस रुपये किलो');S.speak=s};
@@ -837,6 +880,7 @@ $('setBtn').onclick=settingsModal;
 
 // ---------------- events ----------------
 $('addBtn').onclick=()=>editModal(null);
+$('langSw').onclick=e=>{const b=e.target.closest('[data-lang]'); if(!b) return; S.lang=b.dataset.lang; save(); renderLang(); toast('बोलने की भाषा: '+(S.lang==='hi-IN'?'हिंदी':'मराठी'));};
 $('search').oninput=renderList;
 $('sortBtn').onclick=()=>{S.sort=S.sort==='recent'?'az':'recent';save();renderList()};
 $('list').onclick=e=>{
