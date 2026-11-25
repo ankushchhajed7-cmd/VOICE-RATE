@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<!--
+  VOICE RATE — Ankush Kirana
+  Version: v1.0.0  (25 Nov 2026)
+  v1.0.0 — पहला build: बोलकर प्रोडक्ट + रेट, पुराना रेट replace, नया प्रोडक्ट सीधा add,
+           मालिक (PIN) / हेल्पर मोड, बोलकर भाव पूछना + आवाज़ में जवाब, smart matching,
+           गलती सुधार से सीखना, NEW टैग + merge, backup/restore, Gold-Silver डिज़ाइन.
+  अगला: v1.1.0 — Firebase online sync (मालिक का फ़ोन ↔ दुकान का फ़ोन)
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<title>VOICE RATE — Ankush Kirana</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Sans+Devanagari:wght@400;600;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0c; --bg2:#141416; --card:rgba(255,255,255,.035);
+  --gold1:#fff3b8; --gold2:#e6c35c; --gold3:#b8902c; --gold4:#7a5c14;
+  --silver1:#ffffff; --silver2:#d7dade; --silver3:#9aa0a6; --silver4:#5c6166;
+  --text:#ecebe6; --muted:#9b9a94; --red:#ff6b6b; --green:#6fe3a5;
+  --goldGrad:linear-gradient(135deg,var(--gold1) 0%,var(--gold2) 30%,var(--gold3) 60%,var(--gold2) 80%,var(--gold1) 100%);
+  --silverGrad:linear-gradient(135deg,var(--silver1) 0%,var(--silver2) 35%,var(--silver3) 65%,var(--silver2) 100%);
+  --serif:'Playfair Display',Georgia,serif; --brand:'Cinzel',Georgia,serif;
+  --sans:'Noto Sans Devanagari',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans)}
+body{min-height:100vh;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -10%,rgba(230,195,92,.20),transparent 70%),
+    radial-gradient(ellipse 60% 40% at 110% 110%,rgba(215,218,222,.10),transparent 70%),
+    radial-gradient(ellipse 50% 35% at -10% 70%,rgba(184,144,44,.10),transparent 70%),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 14px),
+    var(--bg);
+  background-attachment:fixed;padding-bottom:110px}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px 0}
+.goldText{background:var(--goldGrad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.silverText{background:var(--silverGrad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* frame with gradient border */
+.frame{position:relative;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  backdrop-filter:blur(6px)}
+.frame::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,rgba(255,243,184,.75),rgba(184,144,44,.25) 40%,rgba(215,218,222,.45) 70%,rgba(255,243,184,.6));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.frame.silver::before{background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(154,160,166,.25) 50%,rgba(255,255,255,.5))}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 2px 12px}
+.brand h1{margin:0;font-family:var(--brand);font-weight:800;font-size:25px;letter-spacing:2px;line-height:1;white-space:nowrap}
+.brand .sub{margin-top:5px;font-size:10px;letter-spacing:4px;font-weight:600}
+.hRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.clock{font-size:10.5px;color:var(--silver2);font-family:var(--serif);white-space:nowrap}
+.hBtns{display:flex;gap:8px}
+.chip{border:none;border-radius:999px;padding:6px 11px;font:600 12px var(--sans);cursor:pointer;color:#1a1406;background:var(--goldGrad);box-shadow:0 2px 10px rgba(230,195,92,.25)}
+.chip.silver{background:var(--silverGrad);color:#1c1e20;box-shadow:0 2px 10px rgba(215,218,222,.15)}
+.iconBtn{width:34px;height:34px;border-radius:50%;border:1px solid rgba(215,218,222,.35);background:rgba(255,255,255,.04);color:var(--silver2);font-size:16px;cursor:pointer}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.stat{padding:11px 8px 10px;text-align:center}
+.stat .lbl{font-size:11px;color:var(--silver3);font-weight:600}
+.stat .val{font-family:var(--serif);font-weight:900;font-size:24px;margin-top:3px;line-height:1.1}
+.stat .val.small{font-size:13px;padding-top:7px;white-space:nowrap}
+
+/* mic panel */
+.micPanel{padding:20px 16px 18px;text-align:center;margin-bottom:14px}
+.modeLine{font-size:13px;font-weight:700;margin-bottom:14px}
+.micBtn{position:relative;width:132px;height:132px;border-radius:50%;border:none;cursor:pointer;margin:4px auto 0;display:block;
+  background:radial-gradient(circle at 35% 30%,var(--gold1),var(--gold2) 35%,var(--gold3) 70%,var(--gold4));
+  box-shadow:0 0 0 6px rgba(20,20,22,1),0 0 0 8px rgba(215,218,222,.55),0 12px 40px rgba(230,195,92,.35),inset 0 -8px 18px rgba(0,0,0,.35),inset 0 6px 14px rgba(255,255,255,.45)}
+.micBtn svg{width:54px;height:54px;fill:#1a1406}
+.micBtn.listening{animation:pulse 1.3s ease-in-out infinite}
+.micBtn.listening::after{content:"";position:absolute;inset:-18px;border-radius:50%;border:2px solid rgba(230,195,92,.6);animation:ring 1.3s ease-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes ring{0%{opacity:.9;transform:scale(.85)}100%{opacity:0;transform:scale(1.25)}}
+.hint{margin-top:16px;font-size:14px;color:var(--silver2)}
+.hint b{color:var(--gold2)}
+.heard{min-height:22px;margin-top:8px;font-size:15px;color:var(--gold1);font-style:italic}
+
+/* result card */
+.result{padding:16px;margin-bottom:14px;display:none}
+.result.show{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rTag{display:inline-block;font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px;margin-bottom:8px}
+.rTag.upd{background:var(--goldGrad);color:#1a1406}
+.rTag.new{background:linear-gradient(135deg,#b9ffd8,#43c486);color:#062414}
+.rTag.ask{background:var(--silverGrad);color:#1c1e20}
+.rTag.miss{background:linear-gradient(135deg,#ffc2c2,#e05555);color:#2a0606}
+.rName{font-size:24px;font-weight:800;line-height:1.25}
+.rRate{font-family:var(--serif);font-weight:900;font-size:52px;line-height:1.05;margin:4px 0 2px}
+.rRate small{font-family:var(--sans);font-size:17px;font-weight:600;color:var(--silver2);margin-left:6px}
+.rOld{font-size:13px;color:var(--muted)}
+.rOld s{color:var(--red)}
+.rBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{border:none;border-radius:12px;padding:10px 14px;font:700 14px var(--sans);cursor:pointer}
+.btn.gold{background:var(--goldGrad);color:#1a1406}
+.btn.silver{background:var(--silverGrad);color:#1c1e20}
+.btn.ghost{background:rgba(255,255,255,.05);color:var(--silver2);border:1px solid rgba(215,218,222,.3)}
+.btn.danger{background:linear-gradient(135deg,#ff9b9b,#d64545);color:#2a0606}
+.alts{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.alts button{border:1px solid rgba(230,195,92,.4);background:rgba(230,195,92,.08);color:var(--gold1);border-radius:999px;padding:6px 11px;font:600 13px var(--sans);cursor:pointer}
+
+/* list */
+.listHead{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 9px}
+.listHead h2{margin:0;font-size:15px;font-weight:800}
+.sortBtn{background:none;border:none;color:var(--silver3);font:600 12px var(--sans);cursor:pointer}
+.search{width:100%;padding:13px 14px;border-radius:14px;border:1px solid rgba(215,218,222,.25);background:rgba(255,255,255,.04);
+  color:var(--text);font:500 15px var(--sans);outline:none;margin-bottom:10px}
+.search:focus{border-color:rgba(230,195,92,.7)}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;cursor:pointer}
+.row .nm{flex:1;min-width:0}
+.row .nm .t{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm .s{font-size:11px;color:var(--muted);margin-top:2px}
+.badgeNew{font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;background:linear-gradient(135deg,#b9ffd8,#43c486);color:#062414;margin-left:6px;vertical-align:middle}
+.row .rt{text-align:right}
+.row .rt .p{font-family:var(--serif);font-weight:900;font-size:22px;line-height:1}
+.row .rt .u{font-size:11px;color:var(--silver3);margin-top:3px}
+.row .ed{width:32px;height:32px;border-radius:10px;border:1px solid rgba(215,218,222,.3);background:rgba(255,255,255,.04);color:var(--silver2);font-size:14px;cursor:pointer;flex:none}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:14px;line-height:1.7}
+
+/* bottom bar */
+.bottomBar{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(11,11,12,0),rgba(11,11,12,.92) 35%);display:flex;justify-content:center;gap:10px;z-index:5}
+.bottomBar .btn{flex:1;max-width:270px;padding:13px}
+
+/* modal */
+.modalBg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:20;backdrop-filter:blur(3px)}
+.modalBg.show{display:flex}
+.modal{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--bg2);border-radius:22px 22px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));animation:up .25s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.modal h3{margin:0 0 14px;font-family:var(--sans);font-weight:800;font-size:19px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--silver3);margin-bottom:5px;font-weight:600;letter-spacing:.5px}
+.field input,.field select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(215,218,222,.25);background:rgba(255,255,255,.05);color:var(--text);font:500 16px var(--sans);outline:none}
+.field select option{background:#1b1b1e}
+.mBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.mBtns .btn{flex:1}
+.setRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.setRow .l{font-size:14px}
+.setRow .l small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.pickList{max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.pickList button{text-align:left;padding:11px 12px;border-radius:12px;border:1px solid rgba(215,218,222,.18);background:rgba(255,255,255,.04);color:var(--text);font:600 15px var(--sans);cursor:pointer;display:flex;justify-content:space-between}
+.pickList button span{color:var(--gold2);font-family:var(--serif)}
+.pinDots{display:flex;justify-content:center;gap:14px;margin:6px 0 16px}
+.pinDots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--gold2)}
+.pinDots i.on{background:var(--goldGrad)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pad button{padding:16px 0;border-radius:14px;border:1px solid rgba(215,218,222,.25);background:rgba(255,255,255,.05);color:var(--text);font:700 22px var(--serif);cursor:pointer}
+.pinMsg{text-align:center;font-size:13px;color:var(--silver2);margin-bottom:10px;min-height:18px}
+
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--silverGrad);color:#1c1e20;font:700 14px var(--sans);
+  padding:10px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:.25s;z-index:30;max-width:90%;text-align:center;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.ver{text-align:center;color:var(--silver4);font-size:11px;letter-spacing:2px;margin:22px 0 6px}
+.switch{position:relative;width:46px;height:26px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;border-radius:999px;background:#333;transition:.2s;cursor:pointer}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:var(--silver2);transition:.2s}
+.switch input:checked + span{background:var(--gold3)}
+.switch input:checked + span::after{transform:translateX(20px);background:var(--gold1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1 class="goldText">VOICE RATE</h1>
+      <div class="sub silverText">ANKUSH KIRANA</div>
+    </div>
+    <div class="hRight">
+      <div class="clock" id="clock">--</div>
+      <div class="hBtns">
+        <button class="chip" id="modeChip">👑 मालिक</button>
+        <button class="iconBtn" id="setBtn" aria-label="Settings">⚙</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat frame silver"><div class="lbl">कुल प्रोडक्ट</div><div class="val goldText" id="stTotal">0</div></div>
+    <div class="stat frame silver"><div class="lbl">आज बदले</div><div class="val goldText" id="stToday">0</div></div>
+    <div class="stat frame silver"><div class="lbl">आखिरी अपडेट</div><div class="val small silverText" id="stLast">—</div></div>
+  </div>
+
+  <div class="micPanel frame">
+    <div class="modeLine silverText" id="modeLine">मालिक मोड · रेट बोलें</div>
+    <button class="micBtn" id="micBtn" aria-label="बोलें">
+      <svg viewBox="0 0 24 24"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 0 0-7 0v6A3.5 3.5 0 0 0 12 15zm6.3-3.6a.9.9 0 0 0-1.8 0 4.5 4.5 0 0 1-9 0 .9.9 0 0 0-1.8 0 6.3 6.3 0 0 0 5.4 6.2V20H8.8a.9.9 0 0 0 0 1.8h6.4a.9.9 0 0 0 0-1.8h-2.3v-2.4a6.3 6.3 0 0 0 5.4-6.2z"/></svg>
+    </button>
+    <div class="hint" id="hint">बटन दबाकर बोलें: <b>"शक्कर 45 किलो"</b></div>
+    <div class="heard" id="heard"></div>
+  </div>
+
+  <div class="result frame" id="result"></div>
+
+  <div class="listHead">
+    <h2 class="goldText">आज का भाव</h2>
+    <button class="sortBtn" id="sortBtn">क्रम: अ-ज्ञ ⇅</button>
+  </div>
+  <input class="search" id="search" type="search" placeholder="🔍  प्रोडक्ट खोजें…" autocomplete="off">
+  <div class="list" id="list"></div>
+  <div class="ver" id="ver">VOICE RATE v1.0.0</div>
+</div>
+
+<div class="bottomBar" id="bottomBar">
+  <button class="btn gold" id="addBtn">＋ प्रोडक्ट जोड़ें</button>
+</div>
+
+<div class="modalBg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const APP_VERSION = 'v1.0.0';
+
+// ===================== CORE-START (parsing + matching, no DOM) =====================
+const HI_NUMS = ['एक','दो','तीन','चार','पांच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस','बीस',
+ 'इक्कीस','बाईस','तेईस','चौबीस','पच्चीस','छब्बीस','सत्ताईस','अट्ठाईस','उनतीस','तीस','इकतीस','बत्तीस','तैंतीस','चौंतीस','पैंतीस','छत्तीस','सैंतीस','अड़तीस','उनतालीस','चालीस',
+ 'इकतालीस','बयालीस','तैंतालीस','चवालीस','पैंतालीस','छियालीस','सैंतालीस','अड़तालीस','उनचास','पचास','इक्यावन','बावन','तिरपन','चौवन','पचपन','छप्पन','सत्तावन','अट्ठावन','उनसठ','साठ',
+ 'इकसठ','बासठ','तिरसठ','चौंसठ','पैंसठ','छियासठ','सड़सठ','अड़सठ','उनहत्तर','सत्तर','इकहत्तर','बहत्तर','तिहत्तर','चौहत्तर','पचहत्तर','छिहत्तर','सतहत्तर','अठहत्तर','उन्यासी','अस्सी',
+ 'इक्यासी','बयासी','तिरासी','चौरासी','पचासी','छियासी','सत्तासी','अट्ठासी','नवासी','नब्बे','इक्यानवे','बानवे','तिरानवे','चौरानवे','पचानवे','छियानवे','सत्तानवे','अट्ठानवे','निन्यानवे'];
+const MR_NUMS = ['एक','दोन','तीन','चार','पाच','सहा','सात','आठ','नऊ','दहा','अकरा','बारा','तेरा','चौदा','पंधरा','सोळा','सतरा','अठरा','एकोणीस','वीस',
+ 'एकवीस','बावीस','तेवीस','चोवीस','पंचवीस','सव्वीस','सत्तावीस','अठ्ठावीस','एकोणतीस','तीस','एकतीस','बत्तीस','तेहतीस','चौतीस','पस्तीस','छत्तीस','सदतीस','अडतीस','एकोणचाळीस','चाळीस',
+ 'एक्केचाळीस','बेचाळीस','त्रेचाळीस','चव्वेचाळीस','पंचेचाळीस','सेहेचाळीस','सत्तेचाळीस','अठ्ठेचाळीस','एकोणपन्नास','पन्नास','एक्कावन्न','बावन्न','त्रेपन्न','चोपन्न','पंचावन्न','छप्पन्न','सत्तावन्न','अठ्ठावन्न','एकोणसाठ','साठ',
+ 'एकसष्ठ','बासष्ठ','त्रेसष्ठ','चौसष्ठ','पासष्ठ','सहासष्ठ','सदुसष्ठ','अडुसष्ठ','एकोणसत्तर','सत्तर','एक्काहत्तर','बाहत्तर','त्र्याहत्तर','चौऱ्याहत्तर','पंच्याहत्तर','शहात्तर','सत्त्याहत्तर','अठ्ठ्याहत्तर','एकोणऐंशी','ऐंशी',
+ 'एक्याऐंशी','ब्याऐंशी','त्र्याऐंशी','चौऱ्याऐंशी','पंच्याऐंशी','शहाऐंशी','सत्त्याऐंशी','अठ्ठ्याऐंशी','एकोणनव्वद','नव्वद','एक्याण्णव','ब्याण्णव','त्र्याण्णव','चौऱ्याण्णव','पंच्याण्णव','शहाण्णव','सत्त्याण्णव','अठ्ठ्याण्णव','नव्व्याण्णव'];
+const EXTRA_NUMS = {'पाँच':5,'छः':6,'छे':6,'छ':6,'बाइस':22,'तेइस':23,'अठाइस':28,'अट्ठाइस':28,'चौवालीस':44,'तिरेपन':53,'चौव्वन':54,'सरसठ':67,'उनासी':79,'नवासी':89,
+ 'पंच्याहत्तर':75,'पंचाहत्तर':75,'चौर्याहत्तर':74,'शून्य':0,'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+ 'twenty':20,'thirty':30,'forty':40,'fifty':50,'sixty':60,'seventy':70,'eighty':80,'ninety':90};
+const MUL_WORDS = {'सौ':100,'शंभर':100,'sau':100,'hundred':100,'हज़ार':1000,'हजार':1000,'hazar':1000,'thousand':1000};
+const HUND_WORDS = {'दोनशे':200,'तीनशे':300,'चारशे':400,'पाचशे':500,'सहाशे':600,'सातशे':700,'आठशे':800,'नऊशे':900,'दीडशे':150,'सव्वाशे':125,'अडीचशे':250,'साडेतीनशे':350};
+const FRAC_WORDS = {'सवा':1.25,'सव्वा':1.25,'डेढ़':1.5,'डेढ':1.5,'दीड':1.5,'ढाई':2.5,'ढाइ':2.5,'अढ़ाई':2.5,'अढाई':2.5,'अडीच':2.5};
+const HALF_WORDS = ['साढ़े','साढे','साडे','सढ़े'];
+const LESS_WORDS = ['पौने','पावणे','पावने'];
+const UNIT_WORDS = {'किलो':'किलो','kilo':'किलो','kg':'किलो','केजी':'किलो','किग्रा':'किलो','kilogram':'किलो',
+ 'लीटर':'लीटर','लिटर':'लीटर','litre':'लीटर','liter':'लीटर','ltr':'लीटर',
+ 'पैकेट':'पैकेट','पॅकेट':'पैकेट','पाकीट':'पैकेट','पाकिट':'पैकेट','packet':'पैकेट','pack':'पैकेट',
+ 'नग':'नग','पीस':'नग','piece':'नग','pc':'नग','पिस':'नग',
+ 'ग्राम':'ग्राम','gram':'ग्राम','gm':'ग्राम','ग्रॅम':'ग्राम',
+ 'दर्जन':'दर्जन','डझन':'दर्जन','dozen':'दर्जन','बोरी':'बोरी','पोते':'बोरी','पोता':'बोरी','बॉक्स':'बॉक्स','box':'बॉक्स','डिब्बा':'डिब्बा','डबा':'डिब्बा','बोतल':'बोतल','बाटली':'बोतल'};
+const QUERY_WORDS = ['भाव','भाओ','रेट','rate','दर','कितना','कितने','कितनी','किती','क्या','काय','बताओ','बताइए','बताना','बता','सांगा','सांग','price','प्राइस','कीमत','किमत','कितने का','केवढा'];
+const STOP_WORDS = ['का','की','के','को','है','हैं','हे','आहे','रुपये','रुपए','रुपया','रूपये','रुपय','रुपयांना','रुपयाला','रुपयाचा','रु','रू','rs','rupees','rupee','rupaye','rupay','₹',
+ 'चा','ची','चे','ला','per','प्रति','वाला','वाली','वाले','नया','नवीन','अभी','आज','में','मे','मध्ये','and','और','आणि','तो','ठीक','ओके','ok','please','प्लीज','भैया','भाऊ','का भाव','ने','से','पर'];
+
+const NUM_MAP = {};
+(function buildNums(){
+  HI_NUMS.forEach((w,i)=>{NUM_MAP[numKey(w)]=i+1});
+  MR_NUMS.forEach((w,i)=>{NUM_MAP[numKey(w)]=i+1});
+  for(const w in EXTRA_NUMS) NUM_MAP[numKey(w)]=EXTRA_NUMS[w];
+})();
+function numKey(w){ // spelling-tolerant key for number words
+  return String(w).toLowerCase().replace(/़/g,'').replace(/[ड़]/g,'ड').replace(/[ढ़]/g,'ढ').replace(/ँ/g,'ं')
+    .replace(/[ऱ]/g,'र').replace(/‍|‌/g,'');
+}
+function normText(s){
+  return String(s||'').toLowerCase()
+    .replace(/[०-९]/g,d=>String('०१२३४५६७८९'.indexOf(d)))
+    .replace(/(\d),(\d)/g,'$1$2')
+    .replace(/₹\s*/g,' ₹ ')
+    .replace(/(\d)([^\d\s.])/g,'$1 $2').replace(/([^\d\s.₹])(\d)/g,'$1 $2')
+    .replace(/[।|!?,;:"'()\[\]{}]/g,' ')
+    .replace(/\.(?!\d)/g,' ').replace(/(^|\s)\.(\d)/g,'$1 0.$2')
+    .replace(/\s+/g,' ').trim();
+}
+function tokType(w){
+  if(/^\d+(\.\d+)?$/.test(w)) return {type:'num',v:parseFloat(w)};
+  const k=numKey(w);
+  if(w in MUL_WORDS) return {type:'mul',v:MUL_WORDS[w]};
+  if(k in MUL_WORDS) return {type:'mul',v:MUL_WORDS[k]};
+  if(w in HUND_WORDS) return {type:'hund',v:HUND_WORDS[w]};
+  if(w in FRAC_WORDS) return {type:'frac',v:FRAC_WORDS[w]};
+  if(HALF_WORDS.includes(w)) return {type:'half'};
+  if(LESS_WORDS.includes(w)) return {type:'less'};
+  if(k in NUM_MAP) return {type:'num',v:NUM_MAP[k]};
+  return null;
+}
+function parseRun(run){
+  let total=0,cur=0,pend=null;
+  for(const t of run){
+    if(t.type==='num') cur+=t.v;
+    else if(t.type==='hund') cur+=t.v;
+    else if(t.type==='frac') pend={f:t.v};
+    else if(t.type==='half') pend={add:.5};
+    else if(t.type==='less') pend={add:-.25};
+    else if(t.type==='mul'){
+      let base=cur||1;
+      if(pend){ if(pend.f&&!cur) base=pend.f; else if(pend.add) base=(cur||1)+pend.add; pend=null; }
+      if(t.v===100) cur=base*100; else { total+=base*1000; cur=0; }
+    }
+  }
+  if(pend){ if(pend.f&&!cur) cur=pend.f; else if(pend.add) cur+=pend.add; }
+  return Math.round((total+cur)*100)/100;
+}
+// Parse one spoken sentence -> {name, rate|null, unit, isQuery}
+function parseUtterance(text){
+  const words=normText(text).split(' ').filter(Boolean);
+  const toks=words.map(w=>({w,t:tokType(w)}));
+  // a lone "एक"/"one" between name words is rarely a price; still treated as number
+  const runs=[]; let cur=null;
+  toks.forEach((x,i)=>{
+    if(x.t){ if(!cur){cur={s:i,e:i};runs.push(cur)} else cur.e=i; }
+    else cur=null;
+  });
+  let rate=null, unit='', rateRun=null;
+  if(runs.length){
+    rateRun=runs[runs.length-1];
+    rate=parseRun(toks.slice(rateRun.s,rateRun.e+1).map(x=>x.t));
+  }
+  const nameParts=[]; let isQuery=false;
+  toks.forEach((x,i)=>{
+    if(rateRun && i>=rateRun.s && i<=rateRun.e) return;
+    const w=x.w;
+    if(QUERY_WORDS.includes(w)){isQuery=true;return}
+    if(w in UNIT_WORDS){
+      // "1 किलो" = rate unit; "100 ग्राम" (any other number before it) = pack size, part of the name
+      const prev=toks[i-1];
+      const prevIsSizeNum = i>0 && prev.t && !(rateRun && i-1>=rateRun.s && i-1<=rateRun.e);
+      if(prevIsSizeNum && prev.t.type==='num' && prev.t.v===1 && ['किलो','लीटर','नग','दर्जन','पैकेट'].includes(UNIT_WORDS[w])){
+        nameParts.pop(); if(!unit) unit=UNIT_WORDS[w]; return;
+      }
+      if(prevIsSizeNum){ nameParts.push(w); return; }
+      if(!unit) unit=UNIT_WORDS[w];
+      return;
+    }
+    if(STOP_WORDS.includes(w)||w==='₹') return;
+    nameParts.push(w);
+  });
+  const name=nameParts.join(' ').replace(/\s+/g,' ').trim();
+  if(rate===null || rate<=0) { rate=null; isQuery=true; }
+  return {name, rate, unit, isQuery};
+}
+
+// ---- phonetic key: Devanagari -> simple roman, then sound-alike folding ----
+const DV_CONS={'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'n','च':'ch','छ':'chh','ज':'j','झ':'jh','ञ':'n','ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n',
+ 'त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'ph','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','ळ':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h',
+ 'क़':'k','ख़':'kh','ग़':'g','ज़':'z','फ़':'f','ड़':'d','ढ़':'dh','ऱ':'r','य़':'y'};
+const DV_VOW={'अ':'a','आ':'aa','इ':'i','ई':'ii','उ':'u','ऊ':'uu','ऋ':'ri','ए':'e','ऐ':'ai','ओ':'o','औ':'au','ऑ':'o','ॲ':'e','ऍ':'e'};
+const DV_MAT={'ा':'aa','ि':'i','ी':'ii','ु':'u','ू':'uu','ृ':'ri','े':'e','ै':'ai','ो':'o','ौ':'au','ॉ':'o','ॅ':'e'};
+function translit(s){
+  let out='';const ch=[...String(s).normalize('NFC')];
+  for(let i=0;i<ch.length;i++){
+    const c=ch[i];
+    if(DV_CONS[c]!==undefined){
+      out+=DV_CONS[c];
+      let n=ch[i+1];
+      if(n==='़'){i++;n=ch[i+1];}
+      if(n==='्'){i++;continue}
+      if(DV_MAT[n]!==undefined){out+=DV_MAT[n];i++;continue}
+      out+='a';
+    } else if(DV_VOW[c]!==undefined) out+=DV_VOW[c];
+    else if(c==='ं'||c==='ँ') out+='n';
+    else if(c==='ः') out+='h';
+    else if(c==='़'||c==='्') {}
+    else out+=c;
+  }
+  return out;
+}
+function phoKey(s){
+  let k=translit(String(s).toLowerCase()).toLowerCase().replace(/[^a-z0-9 ]/g,'');
+  k=k.replace(/chh/g,'c').replace(/ch/g,'c').replace(/sh/g,'s').replace(/ph/g,'f').replace(/w/g,'v').replace(/z/g,'j').replace(/q/g,'k').replace(/x/g,'ks').replace(/ck/g,'k')
+     .replace(/([kgcjtdpbr])h/g,'$1')
+     .replace(/ee/g,'i').replace(/ii/g,'i').replace(/oo/g,'u').replace(/uu/g,'u').replace(/ai/g,'e').replace(/au/g,'o').replace(/ay/g,'e')
+     .replace(/a/g,'').replace(/(.)\1+/g,'$1').replace(/\s+/g,' ').trim();
+  return k;
+}
+function lev(a,b){
+  if(a===b) return 0; if(!a.length) return b.length; if(!b.length) return a.length;
+  let prev=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    const cur=[i];
+    for(let j=1;j<=b.length;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    prev=cur;
+  }
+  return prev[b.length];
+}
+function rawKey(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim()}
+function nameScore(heard,cand,allowPartial){
+  if(!heard||!cand) return 0;
+  if(rawKey(heard)===rawKey(cand)) return 1;
+  const a=phoKey(heard).replace(/ /g,''), b=phoKey(cand).replace(/ /g,'');
+  if(!a||!b) return 0;
+  if(a===b) return a.length<=2 ? .9 : .97;
+  const m=Math.max(a.length,b.length);
+  let s=1-lev(a,b)/m;
+  if(Math.min(a.length,b.length)<=3) s-=.12;          // very short names need near-exact
+  if(allowPartial && Math.min(a.length,b.length)>=3 && (a.includes(b)||b.includes(a))) s=Math.max(s,.82);
+  // word-level: every heard word matches some candidate word
+  const hw=phoKey(heard).split(' ').filter(Boolean), cw=phoKey(cand).split(' ').filter(Boolean);
+  if(hw.length>1 && cw.length>1 && hw.length===cw.length){
+    let ok=0; hw.forEach(x=>{ if(cw.some(y=>x===y||(x.length>3&&1-lev(x,y)/Math.max(x.length,y.length)>=.75))) ok++; });
+    if(ok===hw.length) s=Math.max(s,.86);
+  }
+  return Math.max(0,Math.min(1,s));
+}
+function rankProducts(heard,products,allowPartial){
+  return products.map(p=>{
+    let best=nameScore(heard,p.name,allowPartial);
+    (p.aliases||[]).forEach(a=>{best=Math.max(best,nameScore(heard,a,allowPartial))});
+    return {p,score:best};
+  }).sort((x,y)=>y.score-x.score);
+}
+const SET_THRESHOLD=.78, ASK_THRESHOLD=.6;
+// choose the best interpretation among speech alternatives
+function interpret(alts,products,mode){
+  let best=null;
+  alts.forEach((alt,idx)=>{
+    const pr=parseUtterance(alt);
+    if(!pr.name) return;
+    const query = mode==='helper' || pr.isQuery;
+    const ranked=rankProducts(pr.name,products,query);
+    const top=ranked[0]||null;
+    let score=(top?top.score:0) - idx*.02 + (query?0:(pr.rate?.05:-.5));
+    if(!best||score>best._s) best={...pr,isQuery:query,alt,ranked,top,_s:score};
+  });
+  return best;
+}
+// ====================== CORE-END ======================
+if(typeof module!=='undefined'){ module.exports={parseUtterance,phoKey,translit,nameScore,rankProducts,interpret,normText,SET_THRESHOLD,ASK_THRESHOLD}; }
+</script>
+
+<script>
+'use strict';
+if(typeof document!=='undefined'){ (function app(){
+
+// ---------------- storage ----------------
+const KEY='voiceRate.v1';
+let DB=load();
+function load(){
+  try{ const d=JSON.parse(localStorage.getItem(KEY)||'null'); if(d&&d.products) return d; }catch(e){}
+  return {products:[],settings:{lang:'hi-IN',speak:true,pin:null,mode:'owner',sort:'az',voiceRate:1}};
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast('⚠ Save नहीं हुआ')} }
+const S=DB.settings;
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isOwner=()=>S.mode==='owner';
+const NEW_DAYS=7;
+
+// ---------------- helpers ----------------
+function fmtRate(r){ if(r==null) return '—'; return Number.isInteger(r)? String(r) : r.toFixed(2); }
+function rateSpeech(r){ if(Number.isInteger(r)) return r+' रुपये'; const rs=Math.floor(r), p=Math.round((r-rs)*100); return (rs?rs+' रुपये ':'')+p+' पैसे'; }
+function ago(ts){
+  if(!ts) return '—';
+  const d=new Date(ts), now=new Date();
+  const t=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
+  const day=n=>new Date(n.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})).getTime();
+  const diff=Math.round((day(now)-day(d))/864e5);
+  if(diff<=0) return 'आज '+t; if(diff===1) return 'कल '+t;
+  if(diff<30) return diff+' दिन पहले';
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Kolkata'});
+}
+const isNew=p=>p.created && (Date.now()-p.created)<NEW_DAYS*864e5 && !p.seen;
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2300)}
+
+// ---------------- clock ----------------
+function tick(){
+  const n=new Date();
+  $('clock').textContent=n.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',timeZone:'Asia/Kolkata'})+' · '+
+    n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'})+' IST';
+}
+tick(); setInterval(tick,15000);
+
+// ---------------- TTS ----------------
+function speak(text){
+  if(!S.speak||!('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=S.lang||'hi-IN'; u.rate=S.voiceRate||1;
+    const vs=speechSynthesis.getVoices();
+    const v=vs.find(v=>v.lang===u.lang)||vs.find(v=>v.lang&&v.lang.startsWith('hi'))||vs.find(v=>v.lang&&v.lang.startsWith('mr'));
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+if('speechSynthesis' in window){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }
+function sayRate(p){ speak(p.name+', '+rateSpeech(p.rate)+(p.unit?' '+p.unit:'')); }
+
+// ---------------- render ----------------
+function renderMode(){
+  const o=isOwner();
+  $('modeChip').textContent=o?'👑 मालिक':'🧑 हेल्पर';
+  $('modeChip').className='chip'+(o?'':' silver');
+  $('modeLine').textContent=o?'मालिक मोड · रेट बोलें':'हेल्पर मोड · भाव पूछें';
+  $('hint').innerHTML=o?'बटन दबाकर बोलें: <b>"शक्कर 45 किलो"</b><br><small style="color:var(--muted)">भाव पूछना: "शक्कर का भाव?"</small>'
+                       :'बटन दबाकर पूछें: <b>"शक्कर का भाव?"</b><br><small style="color:var(--muted)">या नीचे लिस्ट में प्रोडक्ट दबाएं</small>';
+  $('bottomBar').style.display=o?'flex':'none';
+}
+function renderStats(){
+  const P=DB.products;
+  $('stTotal').textContent=P.length;
+  const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+  $('stToday').textContent=P.filter(p=>p.updated&&new Date(p.updated).toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})===today).length;
+  const last=P.reduce((m,p)=>Math.max(m,p.updated||0),0);
+  $('stLast').textContent=last?ago(last):'—';
+}
+function renderList(){
+  const q=$('search').value.trim();
+  let P=[...DB.products];
+  if(q){
+    P=rankProducts(q,P,true).filter(x=>x.score>=.5 || x.p.name.toLowerCase().includes(q.toLowerCase()) || (x.p.aliases||[]).some(a=>a.toLowerCase().includes(q.toLowerCase()))).map(x=>x.p);
+  } else if(S.sort==='recent') P.sort((a,b)=>(b.updated||0)-(a.updated||0));
+  else P.sort((a,b)=>a.name.localeCompare(b.name,'hi'));
+  $('sortBtn').textContent=S.sort==='recent'?'क्रम: नया पहले ⇅':'क्रम: अ-ज्ञ ⇅';
+  if(!DB.products.length){
+    $('list').innerHTML='<div class="empty">अभी कोई प्रोडक्ट नहीं है।<br>'+(isOwner()?'🎙 माइक दबाकर बोलें: <b class="goldText">"शक्कर 45 किलो"</b>':'मालिक से रेट डलवाएं।')+'</div>';
+    return;
+  }
+  if(!P.length){ $('list').innerHTML='<div class="empty">"'+esc(q)+'" नहीं मिला</div>'; return; }
+  $('list').innerHTML=P.map(p=>`
+    <div class="row frame silver" data-id="${p.id}">
+      <div class="nm"><div class="t">${esc(p.name)}${isNew(p)?'<span class="badgeNew">NEW</span>':''}</div>
+        <div class="s">${esc(ago(p.updated))}</div></div>
+      <div class="rt"><div class="p goldText">₹${fmtRate(p.rate)}</div><div class="u">${p.unit?'प्रति '+esc(p.unit):'&nbsp;'}</div></div>
+      ${isOwner()?`<button class="ed" data-edit="${p.id}" aria-label="Edit">✎</button>`:''}
+    </div>`).join('');
+}
+function renderAll(){renderMode();renderStats();renderList()}
+
+// ---------------- result card ----------------
+let lastAction=null;
+function showResult(html){const r=$('result');r.innerHTML=html;r.classList.add('show');}
+function hideResult(){ $('result').classList.remove('show'); }
+function cardFor(p,tag,tagCls,extra){
+  return `<span class="rTag ${tagCls}">${tag}</span>
+   <div class="rName">${esc(p.name)}</div>
+   <div class="rRate goldText">₹${fmtRate(p.rate)}<small>${p.unit?'/ '+esc(p.unit):''}</small></div>
+   ${extra||''}`;
+}
+
+// ---------------- product ops ----------------
+function findById(id){return DB.products.find(p=>p.id===id)}
+function addAlias(p,heard){
+  const h=rawKey(heard); if(!h||rawKey(p.name)===h) return;
+  p.aliases=p.aliases||[]; if(!p.aliases.some(a=>rawKey(a)===h)) p.aliases.push(heard.trim());
+}
+function setRate(p,rate,unit){
+  const prev={rate:p.rate,unit:p.unit,updated:p.updated};
+  p.rate=rate; if(unit) p.unit=unit; p.updated=Date.now();
+  return prev;
+}
+function createProduct(name,rate,unit){
+  const p={id:uid(),name:name.trim(),rate,unit:unit||'',aliases:[],created:Date.now(),updated:Date.now()};
+  DB.products.push(p); return p;
+}
+function undoLast(silent){
+  if(!lastAction) return;
+  const a=lastAction;
+  if(a.type==='add') DB.products=DB.products.filter(p=>p.id!==a.id);
+  else { const p=findById(a.id); if(p){p.rate=a.prev.rate;p.unit=a.prev.unit;p.updated=a.prev.updated;} }
+  lastAction=null; save(); renderAll();
+  if(!silent){ hideResult(); toast('↩ बदलाव वापस लिया'); }
+}
+
+// ---------------- voice handling ----------------
+function handleSpeech(alts){
+  const r=interpret(alts,DB.products,isOwner()?'owner':'helper');
+  if(!r||!r.name){
+    showResult(`<span class="rTag miss">समझ नहीं आया</span><div class="rOld">सुना: "${esc(alts[0]||'')}"</div><div class="rOld" style="margin-top:6px">फिर से बोलें, जैसे: "शक्कर 45 किलो"</div>`);
+    speak('समझ नहीं आया, फिर से बोलिए'); return;
+  }
+  if(!r.isQuery && isOwner()) doSet(r); else doQuery(r);
+}
+function doSet(r){
+  const top=r.top;
+  if(top && top.score>=SET_THRESHOLD){
+    const p=top.p, prevRate=p.rate, prevUnit=p.unit;
+    const prev=setRate(p,r.rate,r.unit);
+    if(rawKey(r.name)!==rawKey(p.name)) addAlias(p,r.name);
+    lastAction={type:'update',id:p.id,prev,heard:r.name,rate:r.rate,unit:r.unit};
+    save(); renderAll();
+    const same=prevRate===r.rate;
+    showResult(cardFor(p,same?'रेट वही है':'रेट बदला','upd',
+      `<div class="rOld">${same?'पहले भी यही रेट था':'पुराना: <s>₹'+fmtRate(prevRate)+(prevUnit?' / '+esc(prevUnit):'')+'</s> → हटाया'}</div>
+       <div class="rBtns"><button class="btn ghost" data-act="undo">↩ Undo</button><button class="btn silver" data-act="change">गलत प्रोडक्ट? बदलें</button></div>`));
+    speak(p.name+', नया रेट '+rateSpeech(p.rate)+(p.unit?' '+p.unit:''));
+  } else {
+    const p=createProduct(r.name,r.rate,r.unit);
+    lastAction={type:'add',id:p.id,heard:r.name,rate:r.rate,unit:r.unit};
+    save(); renderAll();
+    showResult(cardFor(p,'नया प्रोडक्ट जुड़ा','new',
+      `<div class="rOld">सुना: "${esc(r.alt)}"</div>
+       <div class="rBtns"><button class="btn ghost" data-act="undo">↩ Undo</button><button class="btn silver" data-act="change">पुराना प्रोडक्ट था? चुनें</button><button class="btn ghost" data-act="rename">✎ नाम सुधारें</button></div>`));
+    speak(p.name+' जुड़ गया, '+rateSpeech(p.rate)+(p.unit?' '+p.unit:''));
+  }
+}
+function doQuery(r){
+  const ranked=r.ranked||[]; const top=r.top;
+  if(top && top.score>=ASK_THRESHOLD){
+    const p=top.p;
+    const others=ranked.slice(1,4).filter(x=>x.score>=.5);
+    showResult(cardFor(p,'आज का भाव','ask',
+      `<div class="rOld">अपडेट: ${esc(ago(p.updated))}</div>
+       ${others.length?'<div class="alts">'+others.map(x=>`<button data-say="${x.p.id}">${esc(x.p.name)}</button>`).join('')+'</div>':''}
+       <div class="rBtns"><button class="btn ghost" data-say="${p.id}">🔊 फिर से सुनें</button></div>`));
+    sayRate(p);
+  } else {
+    const sug=ranked.slice(0,4).filter(x=>x.score>=.35);
+    showResult(`<span class="rTag miss">लिस्ट में नहीं</span><div class="rName">"${esc(r.name)}"</div>
+      <div class="rOld">यह प्रोडक्ट लिस्ट में नहीं मिला${sug.length?' · क्या यह था?':''}</div>
+      ${sug.length?'<div class="alts">'+sug.map(x=>`<button data-say="${x.p.id}">${esc(x.p.name)}</button>`).join('')+'</div>':''}`);
+    speak(r.name+' लिस्ट में नहीं है');
+  }
+}
+
+// ---------------- speech recognition ----------------
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, listening=false, gotFinal=false;
+function startListen(){
+  if(!SR){ showResult('<span class="rTag miss">माइक सपोर्ट नहीं</span><div class="rOld">यह ऐप Android पर <b>Chrome</b> में खोलें।</div>'); return; }
+  if(listening){ try{rec.stop()}catch(e){} return; }
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  rec=new SR(); rec.lang=S.lang||'hi-IN'; rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=5;
+  gotFinal=false; $('heard').textContent='सुन रहा हूँ…';
+  rec.onstart=()=>{listening=true;$('micBtn').classList.add('listening')};
+  rec.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const res=e.results[i];
+      if(res.isFinal){
+        gotFinal=true;
+        const alts=[];for(let j=0;j<res.length;j++) alts.push(res[j].transcript);
+        $('heard').textContent='"'+alts[0]+'"';
+        handleSpeech(alts);
+      } else interim+=res[0].transcript;
+    }
+    if(interim) $('heard').textContent=interim+'…';
+  };
+  rec.onerror=e=>{
+    const m={'not-allowed':'माइक की अनुमति दें (Chrome settings)','no-speech':'कुछ सुनाई नहीं दिया','audio-capture':'माइक नहीं मिला','network':'इंटरनेट चेक करें'}[e.error]||('Error: '+e.error);
+    $('heard').textContent=m;
+  };
+  rec.onend=()=>{listening=false;$('micBtn').classList.remove('listening'); if(!gotFinal && $('heard').textContent==='सुन रहा हूँ…') $('heard').textContent='कुछ सुनाई नहीं दिया — फिर दबाएं';};
+  try{rec.start()}catch(e){listening=false}
+}
+$('micBtn').onclick=startListen;
+
+// ---------------- modals ----------------
+function openModal(html){delete $('modal').dataset.lock;$('modal').innerHTML=html;$('modalBg').classList.add('show')}
+function closeModal(){$('modalBg').classList.remove('show')}
+$('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg'&&!$('modal').dataset.lock) closeModal()});
+
+const UNITS=['','किलो','लीटर','पैकेट','नग','ग्राम','दर्जन','बोरी','डिब्बा','बोतल','बॉक्स'];
+function unitSelect(v){return `<select id="fUnit">${UNITS.map(u=>`<option value="${u}" ${u===(v||'')?'selected':''}>${u||'— (बिना यूनिट)'}</option>`).join('')}</select>`}
+
+function editModal(p){
+  const isNewP=!p;
+  p=p||{name:'',rate:'',unit:'',aliases:[]};
+  const others=DB.products.filter(x=>x.id!==p.id).sort((a,b)=>a.name.localeCompare(b.name,'hi'));
+  openModal(`<h3 class="goldText">${isNewP?'नया प्रोडक्ट':'प्रोडक्ट बदलें'}</h3>
+   <div class="field"><label>प्रोडक्ट का नाम</label><input id="fName" value="${esc(p.name)}" placeholder="जैसे: शक्कर"></div>
+   <div class="field"><label>रेट (₹)</label><input id="fRate" type="number" inputmode="decimal" step="0.01" value="${p.rate??''}" placeholder="45"></div>
+   <div class="field"><label>यूनिट</label>${unitSelect(p.unit)}</div>
+   <div class="field"><label>दूसरे नाम (comma से) — जैसे: साखर, sugar</label><input id="fAlias" value="${esc((p.aliases||[]).join(', '))}"></div>
+   <div class="mBtns"><button class="btn gold" id="fSave">✔ Save</button><button class="btn ghost" id="fCancel">Cancel</button></div>
+   ${!isNewP?`<div class="mBtns" style="margin-top:14px">
+     ${others.length?`<select id="fMergeTo" class="btn ghost" style="flex:2"><option value="">↪ किसमें मिलाएं (merge)…</option>${others.map(o=>`<option value="${o.id}">${esc(o.name)} — ₹${fmtRate(o.rate)}</option>`).join('')}</select><button class="btn silver" id="fMerge">Merge</button>`:''}
+   </div><div class="mBtns"><button class="btn danger" id="fDel">🗑 डिलीट</button></div>`:''}`);
+  $('fCancel').onclick=closeModal;
+  $('fSave').onclick=()=>{
+    const name=$('fName').value.trim(), rate=parseFloat($('fRate').value), unit=$('fUnit').value;
+    if(!name) return toast('नाम लिखें'); if(!(rate>0)) return toast('सही रेट लिखें');
+    const aliases=$('fAlias').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if(isNewP){
+      const dup=DB.products.find(x=>rawKey(x.name)===rawKey(name));
+      if(dup){ setRate(dup,rate,unit); dup.unit=unit; aliases.forEach(a=>addAlias(dup,a)); toast('पहले से था — रेट बदला'); }
+      else { const np=createProduct(name,rate,unit); np.aliases=aliases; np.seen=true; toast('✔ जोड़ा गया'); }
+    } else {
+      const real=findById(p.id); if(!real) return closeModal();
+      const oldName=real.name;
+      real.name=name;
+      if(real.rate!==rate||real.unit!==unit){ real.rate=rate; real.updated=Date.now(); }
+      real.unit=unit; real.aliases=aliases.filter(a=>rawKey(a)!==rawKey(name)); real.seen=true;
+      if(rawKey(oldName)!==rawKey(name)) addAlias(real,oldName); // old (mis-heard) name keeps matching
+      toast('✔ Save हुआ');
+    }
+    save(); closeModal(); renderAll();
+  };
+  if(!isNewP){
+    $('fDel').onclick=()=>{
+      if(!confirmInline('fDel','पक्का डिलीट? फिर दबाएं')) return;
+      DB.products=DB.products.filter(x=>x.id!==p.id); save(); closeModal(); renderAll(); hideResult(); toast('🗑 डिलीट हुआ');
+    };
+    const mb=$('fMerge');
+    if(mb) mb.onclick=()=>{
+      const tid=$('fMergeTo').value; if(!tid) return toast('किसमें मिलाना है चुनें');
+      const t=findById(tid), src=findById(p.id); if(!t||!src) return;
+      addAlias(t,src.name); (src.aliases||[]).forEach(a=>addAlias(t,a));
+      if((src.updated||0)>(t.updated||0)){ t.rate=src.rate; if(src.unit) t.unit=src.unit; t.updated=src.updated; }
+      DB.products=DB.products.filter(x=>x.id!==src.id); save(); closeModal(); renderAll(); hideResult();
+      toast('✔ "'+src.name+'" → "'+t.name+'" में मिला दिया');
+    };
+  }
+}
+function confirmInline(id,msg){
+  const b=$(id); if(b.dataset.sure) return true;
+  b.dataset.sure='1'; b.textContent=msg; setTimeout(()=>{if(b){delete b.dataset.sure;b.textContent='🗑 डिलीट'}},3000); return false;
+}
+
+function changeModal(){
+  if(!lastAction) return;
+  const a=lastAction;
+  const draw=q=>{
+    const P=q?rankProducts(q,DB.products,true).filter(x=>x.score>=.3).map(x=>x.p):[...DB.products].sort((x,y)=>x.name.localeCompare(y.name,'hi'));
+    $('pick').innerHTML=P.filter(p=>!(a.type==='add'&&p.id===a.id)).map(p=>`<button data-pick="${p.id}">${esc(p.name)}<span>₹${fmtRate(p.rate)}</span></button>`).join('')||'<div class="empty">कुछ नहीं मिला</div>';
+  };
+  openModal(`<h3 class="goldText">सही प्रोडक्ट चुनें</h3>
+    <div class="rOld" style="margin-bottom:8px">सुना: "<b class="goldText">${esc(a.heard)}</b>" · रेट ₹${fmtRate(a.rate)}</div>
+    <input class="search" id="pickQ" placeholder="🔍 खोजें…" value="">
+    <div class="pickList" id="pick"></div>
+    <div class="mBtns" style="margin-top:12px">${a.type==='update'?'<button class="btn gold" id="pickNew">＋ इसे नया प्रोडक्ट बनाएं</button>':''}<button class="btn ghost" id="pickCancel">Cancel</button></div>`);
+  draw(a.heard);
+  $('pickQ').oninput=e=>draw(e.target.value.trim());
+  $('pickCancel').onclick=closeModal;
+  $('pick').onclick=e=>{
+    const b=e.target.closest('[data-pick]'); if(!b) return;
+    const t=findById(b.dataset.pick); if(!t) return;
+    const heard=a.heard, rate=a.rate, unit=a.unit;
+    undoLast(true);
+    const prevRate=t.rate;
+    const prev=setRate(t,rate,unit); addAlias(t,heard);
+    lastAction={type:'update',id:t.id,prev,heard,rate,unit};
+    save(); closeModal(); renderAll();
+    showResult(cardFor(t,'रेट बदला','upd',`<div class="rOld">पुराना: <s>₹${fmtRate(prevRate)}</s> → हटाया · अब "${esc(heard)}" बोलने पर यही प्रोडक्ट आएगा ✔</div>
+      <div class="rBtns"><button class="btn ghost" data-act="undo">↩ Undo</button></div>`));
+    toast('✔ सीख लिया: "'+heard+'" = '+t.name);
+  };
+  const pn=$('pickNew');
+  if(pn) pn.onclick=()=>{
+    const heard=a.heard, rate=a.rate, unit=a.unit;
+    undoLast(true);
+    const p=createProduct(heard,rate,unit);
+    lastAction={type:'add',id:p.id,heard,rate,unit};
+    save(); closeModal(); renderAll();
+    showResult(cardFor(p,'नया प्रोडक्ट जुड़ा','new','<div class="rBtns"><button class="btn ghost" data-act="undo">↩ Undo</button><button class="btn ghost" data-act="rename">✎ नाम सुधारें</button></div>'));
+  };
+}
+
+// ---------------- PIN ----------------
+function pinModal(title,onDone,allowCancel){
+  let v='';
+  openModal(`<h3 class="goldText" style="text-align:center">${title}</h3>
+    <div class="pinMsg" id="pinMsg">4 अंक का PIN</div>
+    <div class="pinDots" id="pinDots">${'<i></i>'.repeat(4)}</div>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<button data-k="${k}" ${k===''?'style="visibility:hidden"':''}>${k}</button>`).join('')}</div>
+    ${allowCancel?'<div class="mBtns" style="margin-top:12px"><button class="btn ghost" id="pinCancel">Cancel</button></div>':''}`);
+  if(!allowCancel) $('modal').dataset.lock='1';
+  const dots=()=>[...$('pinDots').children].forEach((d,i)=>d.classList.toggle('on',i<v.length));
+  $('modal').querySelector('.pad').onclick=e=>{
+    const b=e.target.closest('[data-k]'); if(!b) return; const k=b.dataset.k;
+    if(k==='⌫') v=v.slice(0,-1); else if(k!==''&&v.length<4) v+=k;
+    dots();
+    if(v.length===4){ const r=onDone(v); if(r===false){ v=''; setTimeout(dots,250); } }
+  };
+  const c=$('pinCancel'); if(c) c.onclick=()=>{delete $('modal').dataset.lock;closeModal()};
+}
+function setupPin(){
+  pinModal('मालिक PIN बनाएं',v=>{
+    const first=v;
+    setTimeout(()=>pinModal('PIN दोबारा डालें',v2=>{
+      if(v2!==first){ $('pinMsg').textContent='❌ PIN मेल नहीं खाया — फिर से'; setTimeout(setupPin,700); return false; }
+      S.pin=v2; save(); delete $('modal').dataset.lock; closeModal(); toast('✔ PIN सेट हो गया'); return true;
+    },false),200);
+    return true;
+  },false);
+}
+function askPin(then){
+  pinModal('मालिक PIN डालें',v=>{
+    if(v===S.pin){ delete $('modal').dataset.lock; closeModal(); then(); return true; }
+    $('pinMsg').textContent='❌ गलत PIN'; return false;
+  },true);
+}
+$('modeChip').onclick=()=>{
+  if(isOwner()){ S.mode='helper'; save(); renderAll(); hideResult(); toast('🔒 हेल्पर मोड चालू — अब रेट नहीं बदलेगा'); }
+  else askPin(()=>{ S.mode='owner'; save(); renderAll(); toast('👑 मालिक मोड'); });
+};
+
+// ---------------- settings ----------------
+function settingsModal(){
+  const o=isOwner();
+  openModal(`<h3 class="goldText">सेटिंग्स</h3>
+   <div class="setRow"><div class="l">बोलने की भाषा<small>हिंदी + मराठी मिक्स के लिए "हिंदी" सबसे अच्छा</small></div>
+     <select id="sLang" class="btn ghost"><option value="hi-IN" ${S.lang==='hi-IN'?'selected':''}>हिंदी</option><option value="mr-IN" ${S.lang==='mr-IN'?'selected':''}>मराठी</option></select></div>
+   <div class="setRow"><div class="l">आवाज़ में जवाब<small>रेट बोलकर बताएगा</small></div><label class="switch"><input type="checkbox" id="sSpeak" ${S.speak?'checked':''}><span></span></label></div>
+   <div class="setRow"><div class="l">बोलने की स्पीड</div>
+     <select id="sVRate" class="btn ghost">${[[.8,'धीमी'],[1,'नॉर्मल'],[1.2,'तेज़']].map(([v,l])=>`<option value="${v}" ${S.voiceRate==v?'selected':''}>${l}</option>`).join('')}</select></div>
+   <div class="setRow"><div class="l">🔊 आवाज़ टेस्ट</div><button class="btn silver" id="sTest">सुनें</button></div>
+   ${o?`
+   <div class="setRow"><div class="l">PIN बदलें</div><button class="btn silver" id="sPin">बदलें</button></div>
+   <div class="setRow"><div class="l">☁ ऑनलाइन Sync<small>दुकान ↔ आपका फ़ोन — अगले version (v1.1) में</small></div><span class="silverText" style="font-size:12px">जल्द</span></div>
+   <div class="setRow"><div class="l">💾 Backup लें<small>सारे रेट एक फाइल में</small></div><button class="btn gold" id="sExp">Download</button></div>
+   <div class="setRow"><div class="l">📂 Backup वापस डालें</div><button class="btn silver" id="sImp">फाइल चुनें</button><input type="file" id="sFile" accept=".json,application/json" style="display:none"></div>
+   <div class="setRow"><div class="l">🗑 सारे प्रोडक्ट हटाएं</div><button class="btn danger" id="sClear">हटाएं</button></div>`:''}
+   <div class="ver">VOICE RATE ${APP_VERSION} · Ankush New Vision</div>
+   <div class="mBtns"><button class="btn ghost" id="sClose">बंद करें</button></div>`);
+  $('sClose').onclick=closeModal;
+  $('sLang').onchange=e=>{S.lang=e.target.value;save();toast('भाषा: '+(S.lang==='hi-IN'?'हिंदी':'मराठी'))};
+  $('sSpeak').onchange=e=>{S.speak=e.target.checked;save()};
+  $('sVRate').onchange=e=>{S.voiceRate=parseFloat(e.target.value);save()};
+  $('sTest').onclick=()=>{const s=S.speak;S.speak=true;speak('शक्कर, पैंतालीस रुपये किलो');S.speak=s};
+  if(o){
+    $('sPin').onclick=()=>askPin(()=>setTimeout(setupPin,200));
+    $('sExp').onclick=()=>{
+      const blob=new Blob([JSON.stringify({app:'VOICE RATE',version:APP_VERSION,exported:new Date().toISOString(),products:DB.products},null,1)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='voice-rate-backup-'+new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})+'.json'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('💾 Backup download हुआ');
+    };
+    $('sImp').onclick=()=>$('sFile').click();
+    $('sFile').onchange=e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const rd=new FileReader();
+      rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!Array.isArray(d.products)) throw 0;
+          DB.products=d.products.filter(p=>p&&p.name&&p.rate>0).map(p=>({id:p.id||uid(),name:String(p.name),rate:+p.rate,unit:p.unit||'',aliases:p.aliases||[],created:p.created||Date.now(),updated:p.updated||Date.now(),seen:true}));
+          save(); closeModal(); renderAll(); toast('✔ '+DB.products.length+' प्रोडक्ट वापस आए');
+        }catch(err){ toast('❌ गलत फाइल'); } };
+      rd.readAsText(f);
+    };
+    $('sClear').onclick=()=>{
+      const b=$('sClear'); if(!b.dataset.sure){b.dataset.sure='1';b.textContent='पक्का? फिर दबाएं';return}
+      DB.products=[]; lastAction=null; save(); closeModal(); renderAll(); hideResult(); toast('सब हटा दिया');
+    };
+  }
+}
+$('setBtn').onclick=settingsModal;
+
+// ---------------- events ----------------
+$('addBtn').onclick=()=>editModal(null);
+$('search').oninput=renderList;
+$('sortBtn').onclick=()=>{S.sort=S.sort==='recent'?'az':'recent';save();renderList()};
+$('list').onclick=e=>{
+  const ed=e.target.closest('[data-edit]');
+  if(ed){ e.stopPropagation(); if(isOwner()) editModal(findById(ed.dataset.edit)); return; }
+  const row=e.target.closest('.row'); if(!row) return;
+  const p=findById(row.dataset.id); if(!p) return;
+  if(isNew(p)&&isOwner()){ p.seen=true; save(); }
+  showResult(cardFor(p,'आज का भाव','ask',`<div class="rOld">अपडेट: ${esc(ago(p.updated))}</div>`)); sayRate(p);
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+$('result').onclick=e=>{
+  const b=e.target.closest('[data-act],[data-say]'); if(!b) return;
+  if(b.dataset.say){ const p=findById(b.dataset.say); if(p){ showResult(cardFor(p,'आज का भाव','ask',`<div class="rOld">अपडेट: ${esc(ago(p.updated))}</div>`)); sayRate(p);} return; }
+  const a=b.dataset.act;
+  if(a==='undo') undoLast();
+  else if(a==='change') changeModal();
+  else if(a==='rename'&&lastAction){ const p=findById(lastAction.id); if(p) editModal(p); }
+};
+
+// ---------------- boot ----------------
+renderAll();
+if(!S.pin) setTimeout(setupPin,400);
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.__VR={DB,handleSpeech,renderAll};
+})(); }
+</script>
+</body>
+</html>
