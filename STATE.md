@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.1.0 | 26 Nov 2026 | Sarvam AI voice (saaras:v4, product naam keyterms me — sabse naye 50), Settings: on/off, API key (sirf phone me), "sirf maalik ke liye" (default on), Mode सामान्य/मिक्स, Proxy URL, Test button, istemaal ka hisaab (₹30/ghanta). Bolkar rukne ke 1.3 sec baad apne aap band. Sarvam fail (key/credit/net) → apne aap free voice. worker.js = Cloudflare proxy (sirf zaroorat ho to) |
 | v1.0.3 | 26 Nov 2026 | Naya version turant: own files hamesha bina HTTP-cache ke network se (no-store), sw.js updateViaCache none, khulte hi GitHub par naya version check karke peela banner "नया version आ गया — यहाँ दबाएं" |
 | v1.0.2 | 25 Nov 2026 | Header me version number + ⟳ Refresh button (cache saaf karke naya version laata hai, rates safe rehte hain) |
 | v1.0.1 | 25 Nov 2026 | Video test ke baad number fix: "14 से 60" = 1460 (से/सो = सौ), ₹ se number nahi tootta, Marathi "चौदाशे/एकशे" hundreds, galat likhe number (पासेस्टर = 65) ka andaaza, rate na sunaai de to saaf message, main screen par हिंदी/मराठी button |
@@ -12,6 +13,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 
 ## Files
 - `index.html`: poora app (single file, vanilla JS)
+- `worker.js`: Sarvam proxy for Cloudflare (optional)
 - `manifest.json`, `sw.js` (network-first), `icon-192.png`, `icon-512.png`
 - Data phone ke `localStorage` me rehta hai (key `voiceRate.v1`)
 
@@ -33,6 +35,6 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 
 ## Pending / next
 - **v1.1.0: Firebase online sync** (free Spark plan). Maalik ka phone ↔ dukaan ka phone, turant update.
-- Optional baad me: Sarvam AI speech-to-text (₹1,000 free credit) agar free voice ki accuracy kam pade.
+- Sarvam direct browser se chalta hai ya Proxy chahiye — asli key se Test karke confirm karna.
 - APK ke liye apk-factory me native voice + TTS bridge (Android SpeechRecognizer + TextToSpeech), agar APK chahiye.
 - Real dukaan test: Hindi vs Marathi language setting me se kaunsi zyada sahi pakadti hai.
