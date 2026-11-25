@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.1.2 | 26 Nov 2026 | APK me mic error (NotReadable/NotAllowed) par card: Android Settings → Microphone Allow, screen recorder band, app dobara kholo |
 | v1.1.1 | 26 Nov 2026 | APK support: APK me jawab ANVAlert.speak (Android TTS) se; APK me free voice nahi chalti to "Sarvam चालू करें" message; mic error ka asli kaaran (permission / mic busy / not found). apk-factory me runtime mic permission fix (feature-mic-permission) ke saath use karo |
 | v1.1.0 | 26 Nov 2026 | Sarvam AI voice (saaras:v4, product naam keyterms me — sabse naye 50), Settings: on/off, API key (sirf phone me), "sirf maalik ke liye" (default on), Mode सामान्य/मिक्स, Proxy URL, Test button, istemaal ka hisaab (₹30/ghanta). Bolkar rukne ke 1.3 sec baad apne aap band. Sarvam fail (key/credit/net) → apne aap free voice. worker.js = Cloudflare proxy (sirf zaroorat ho to) |
 | v1.0.3 | 26 Nov 2026 | Naya version turant: own files hamesha bina HTTP-cache ke network se (no-store), sw.js updateViaCache none, khulte hi GitHub par naya version check karke peela banner "नया version आ गया — यहाँ दबाएं" |

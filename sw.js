@@ -1,5 +1,5 @@
-// VOICE RATE service worker — v1.1.1 — network-first; pages always fetched fresh (no HTTP cache)
-const CACHE = 'voice-rate-v1.1.1';
+// VOICE RATE service worker — v1.1.2 — network-first; pages always fetched fresh (no HTTP cache)
+const CACHE = 'voice-rate-v1.1.2';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
