@@ -3,7 +3,8 @@
 <head>
 <!--
   VOICE RATE — Ankush Kirana
-  Version: v1.1.0  (26 Nov 2026)
+  Version: v1.1.1  (26 Nov 2026)
+  v1.1.1 — APK सपोर्ट: APK में जवाब APK की अपनी आवाज़ (ANVAlert) से, APK में free voice न चले तो Sarvam चालू करने का साफ़ मैसेज, माइक error का असली कारण.
   v1.1.0 — Sarvam AI आवाज़ (saaras:v4, आपके प्रोडक्ट नाम keyterms में), 'सिर्फ मालिक' विकल्प, इस्तेमाल का हिसाब,
            Sarvam न चले तो अपने आप free voice, Test बटन, ज़रूरत हो तो Proxy (Cloudflare Worker) URL.
   v1.0.3 — नया version तुरंत: पेज हमेशा cache के बिना नेटवर्क से, खुलते ही नया version चेक + पीला बैनर.
@@ -193,7 +194,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
     <div class="brand">
       <h1 class="goldText">VOICE RATE</h1>
       <div class="sub silverText">ANKUSH KIRANA</div>
-      <span class="verPill" id="verPill">v1.1.0</span>
+      <span class="verPill" id="verPill">v1.1.1</span>
     </div>
     <div class="hRight">
       <div class="clock" id="clock">--</div>
@@ -231,7 +232,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
   </div>
   <input class="search" id="search" type="search" placeholder="🔍  प्रोडक्ट खोजें…" autocomplete="off">
   <div class="list" id="list"></div>
-  <div class="ver" id="ver">VOICE RATE v1.1.0</div>
+  <div class="ver" id="ver">VOICE RATE v1.1.1</div>
 </div>
 
 <div class="bottomBar" id="bottomBar">
@@ -243,7 +244,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
 
 <script>
 'use strict';
-const APP_VERSION = 'v1.1.0';
+const APP_VERSION = 'v1.1.1';
 
 // ===================== CORE-START (parsing + matching, no DOM) =====================
 const HI_NUMS = ['एक','दो','तीन','चार','पांच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस','बीस',
@@ -520,8 +521,11 @@ function tick(){
 tick(); setInterval(tick,15000);
 
 // ---------------- TTS ----------------
+const IN_APK=!!window.ANVAlert;
 function speak(text){
-  if(!S.speak||!('speechSynthesis' in window)) return;
+  if(!S.speak) return;
+  if(IN_APK){ try{ window.ANVAlert.speak(String(text)); return; }catch(e){} }
+  if(!('speechSynthesis' in window)) return;
   try{
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
@@ -679,6 +683,7 @@ function doQuery(r){
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let rec=null, listening=false, gotFinal=false;
 function startListen(){
+  if(IN_APK){ showResult('<span class="rTag miss">APK में Sarvam चाहिए</span><div class="rOld" style="margin-top:6px">APK के अंदर free Google voice नहीं चलती। ⚙ Settings → <b class="goldText">Sarvam चालू</b> करें और API key डालें।</div>'); return; }
   if(!SR){ showResult('<span class="rTag miss">माइक सपोर्ट नहीं</span><div class="rOld">यह ऐप Android पर <b>Chrome</b> में खोलें।</div>'); return; }
   if(listening){ try{rec.stop()}catch(e){} return; }
   if('speechSynthesis' in window) speechSynthesis.cancel();
@@ -725,7 +730,12 @@ async function sarvamListen(){
   if('speechSynthesis' in window) speechSynthesis.cancel();
   let stream;
   try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}); }
-  catch(e){ $('heard').textContent='माइक की अनुमति दें (Chrome settings)'; return; }
+  catch(e){
+    const n=e&&e.name;
+    $('heard').textContent = n==='NotAllowedError'||n==='SecurityError' ? (IN_APK?'माइक की अनुमति दें (फ़ोन Settings → Apps → VOICE RATE → Permissions)':'माइक की अनुमति दें (Chrome settings)')
+      : n==='NotFoundError' ? 'माइक नहीं मिला' : n==='NotReadableError' ? 'माइक कोई दूसरा ऐप इस्तेमाल कर रहा है' : 'माइक नहीं खुला: '+(n||e);
+    return;
+  }
   const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
   let mr; try{ mr=new MediaRecorder(stream, mime?{mimeType:mime}:undefined); }catch(e){ stream.getTracks().forEach(t=>t.stop()); startListen(); return; }
   const st={mr,stream,chunks:[],spoke:false,start:Date.now(),lastLoud:Date.now(),mime:mr.mimeType||mime||'audio/webm'};

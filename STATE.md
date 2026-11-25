@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.1.1 | 26 Nov 2026 | APK support: APK me jawab ANVAlert.speak (Android TTS) se; APK me free voice nahi chalti to "Sarvam चालू करें" message; mic error ka asli kaaran (permission / mic busy / not found). apk-factory me runtime mic permission fix (feature-mic-permission) ke saath use karo |
 | v1.1.0 | 26 Nov 2026 | Sarvam AI voice (saaras:v4, product naam keyterms me — sabse naye 50), Settings: on/off, API key (sirf phone me), "sirf maalik ke liye" (default on), Mode सामान्य/मिक्स, Proxy URL, Test button, istemaal ka hisaab (₹30/ghanta). Bolkar rukne ke 1.3 sec baad apne aap band. Sarvam fail (key/credit/net) → apne aap free voice. worker.js = Cloudflare proxy (sirf zaroorat ho to) |
 | v1.0.3 | 26 Nov 2026 | Naya version turant: own files hamesha bina HTTP-cache ke network se (no-store), sw.js updateViaCache none, khulte hi GitHub par naya version check karke peela banner "नया version आ गया — यहाँ दबाएं" |
 | v1.0.2 | 25 Nov 2026 | Header me version number + ⟳ Refresh button (cache saaf karke naya version laata hai, rates safe rehte hain) |
@@ -31,7 +32,8 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 - Repo ka naam VOICE-RATE.
 - Har app me upar version number + Refresh button (Ankush ka standing rule).
 
-- APK (apk-factory WebView) me browser voice + TTS nahi chalte. Abhi Chrome me "Add to Home screen" se chalana hai.
+- APK (apk-factory WebView): free Google voice nahi chalti; Sarvam (getUserMedia) chalega jab apk-factory runtime mic permission maange (fix: apk-factory branch feature-mic-permission). TTS APK me ANVAlert.speak se.
+- APK aur Chrome wala app apna data alag-alag rakhte hain (Backup/Restore se le ja sakte ho).
 
 ## Pending / next
 - **v1.1.0: Firebase online sync** (free Spark plan). Maalik ka phone ↔ dukaan ka phone, turant update.
