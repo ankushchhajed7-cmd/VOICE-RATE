@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.0.3 | 26 Nov 2026 | Naya version turant: own files hamesha bina HTTP-cache ke network se (no-store), sw.js updateViaCache none, khulte hi GitHub par naya version check karke peela banner "नया version आ गया — यहाँ दबाएं" |
 | v1.0.2 | 25 Nov 2026 | Header me version number + ⟳ Refresh button (cache saaf karke naya version laata hai, rates safe rehte hain) |
 | v1.0.1 | 25 Nov 2026 | Video test ke baad number fix: "14 से 60" = 1460 (से/सो = सौ), ₹ se number nahi tootta, Marathi "चौदाशे/एकशे" hundreds, galat likhe number (पासेस्टर = 65) ka andaaza, rate na sunaai de to saaf message, main screen par हिंदी/मराठी button |
 | v1.0.0 | 25 Nov 2026 | Pehla build: voice se rate set, purana rate replace, naya product seedha add, Maalik (PIN) / Helper mode, voice se bhav poochna + bolkar jawab, smart matching (Hindi + Marathi), galti sudhar se seekhna (alias), NEW tag + merge, backup/restore, Gold-Silver design, PWA offline |

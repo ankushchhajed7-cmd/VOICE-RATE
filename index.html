@@ -3,7 +3,8 @@
 <head>
 <!--
   VOICE RATE — Ankush Kirana
-  Version: v1.0.2  (25 Nov 2026)
+  Version: v1.0.3  (26 Nov 2026)
+  v1.0.3 — नया version तुरंत: पेज हमेशा cache के बिना नेटवर्क से, खुलते ही नया version चेक + पीला बैनर.
   v1.0.2 — ऊपर version नंबर + ⟳ Refresh बटन (cache साफ़ करके नया version लाता है, डेटा सुरक्षित).
   v1.0.1 — नंबर की गलती ठीक: '14 से 60' = 1460 (से/सो = सौ), ₹ से नंबर नहीं टूटता, मराठी 'चौदाशे' जैसे शब्द,
            गलत लिखे नंबर (पासेस्टर = 65) का अंदाज़ा, रेट न सुनाई दे तो साफ़ मैसेज, मेन स्क्रीन पर हिंदी/मराठी बटन.
@@ -59,6 +60,8 @@ body{min-height:100vh;
 header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 2px 12px}
 .brand h1{margin:0;font-family:var(--brand);font-weight:800;font-size:25px;letter-spacing:2px;line-height:1;white-space:nowrap}
 .brand .sub{margin-top:5px;font-size:10px;letter-spacing:4px;font-weight:600}
+.updBar{display:none;margin:0 0 12px;padding:11px 14px;border-radius:14px;background:var(--goldGrad);color:#1a1406;font:800 14px var(--sans);text-align:center;cursor:pointer;box-shadow:0 6px 20px rgba(230,195,92,.3)}
+.updBar.show{display:block}
 .verPill{display:inline-block;margin-top:7px;padding:3px 10px;border-radius:999px;font:800 11px var(--serif);letter-spacing:1px;color:#1a1406;background:var(--goldGrad)}
 .iconBtn.spin{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -184,7 +187,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
     <div class="brand">
       <h1 class="goldText">VOICE RATE</h1>
       <div class="sub silverText">ANKUSH KIRANA</div>
-      <span class="verPill" id="verPill">v1.0.2</span>
+      <span class="verPill" id="verPill">v1.0.3</span>
     </div>
     <div class="hRight">
       <div class="clock" id="clock">--</div>
@@ -196,6 +199,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
     </div>
   </header>
 
+  <div class="updBar" id="updBar"></div>
   <div class="stats">
     <div class="stat frame silver"><div class="lbl">कुल प्रोडक्ट</div><div class="val goldText" id="stTotal">0</div></div>
     <div class="stat frame silver"><div class="lbl">आज बदले</div><div class="val goldText" id="stToday">0</div></div>
@@ -220,7 +224,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
   </div>
   <input class="search" id="search" type="search" placeholder="🔍  प्रोडक्ट खोजें…" autocomplete="off">
   <div class="list" id="list"></div>
-  <div class="ver" id="ver">VOICE RATE v1.0.2</div>
+  <div class="ver" id="ver">VOICE RATE v1.0.3</div>
 </div>
 
 <div class="bottomBar" id="bottomBar">
@@ -232,7 +236,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
 
 <script>
 'use strict';
-const APP_VERSION = 'v1.0.2';
+const APP_VERSION = 'v1.0.3';
 
 // ===================== CORE-START (parsing + matching, no DOM) =====================
 const HI_NUMS = ['एक','दो','तीन','चार','पांच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस','बीस',
@@ -884,14 +888,26 @@ function settingsModal(){
 }
 $('setBtn').onclick=settingsModal;
 // ⟳ Refresh: cache साफ़, service worker हटाओ, नया version लोड — localStorage का डेटा नहीं हटता
-$('refBtn').onclick=async()=>{
+async function hardRefresh(){
   $('refBtn').classList.add('spin'); toast('⟳ नया version ला रहा हूँ…');
   try{
     if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }
     if('caches' in window){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
   }catch(e){}
   setTimeout(()=>{ location.replace(location.pathname+'?v='+Date.now()); },400);
-};
+}
+$('refBtn').onclick=hardRefresh;
+$('updBar').onclick=hardRefresh;
+// खुलते ही GitHub पर नया version है क्या, देखो
+async function checkUpdate(){
+  try{
+    const r=await fetch('index.html?check='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
+    const m=(await r.text()).match(/APP_VERSION = '([^']+)'/);
+    if(m && m[1]!==APP_VERSION){ $('updBar').textContent='🔔 नया version '+m[1]+' आ गया — यहाँ दबाएं'; $('updBar').classList.add('show'); }
+  }catch(e){}
+}
+setTimeout(checkUpdate,1500);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkUpdate(); });
 
 // ---------------- events ----------------
 $('addBtn').onclick=()=>editModal(null);
@@ -919,7 +935,7 @@ $('result').onclick=e=>{
 // ---------------- boot ----------------
 renderAll();
 if(!S.pin) setTimeout(setupPin,400);
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 window.__VR={DB,handleSpeech,renderAll};
 })(); }
 </script>
