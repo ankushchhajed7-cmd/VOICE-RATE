@@ -3,7 +3,8 @@
 <head>
 <!--
   VOICE RATE — Ankush Kirana
-  Version: v1.1.2  (26 Nov 2026)
+  Version: v1.1.3  (26 Nov 2026)
+  v1.1.3 — माइक error कार्ड में असली technical कारण (error name + message) दिखता है.
   v1.1.2 — APK में माइक error पर साफ़ रास्ता (Android Settings → Microphone Allow / screen recorder बंद), Sarvam चालू हो तो पुराना 'APK में Sarvam चाहिए' कार्ड नहीं.
   v1.1.1 — APK सपोर्ट: APK में जवाब APK की अपनी आवाज़ (ANVAlert) से, APK में free voice न चले तो Sarvam चालू करने का साफ़ मैसेज, माइक error का असली कारण.
   v1.1.0 — Sarvam AI आवाज़ (saaras:v4, आपके प्रोडक्ट नाम keyterms में), 'सिर्फ मालिक' विकल्प, इस्तेमाल का हिसाब,
@@ -195,7 +196,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
     <div class="brand">
       <h1 class="goldText">VOICE RATE</h1>
       <div class="sub silverText">ANKUSH KIRANA</div>
-      <span class="verPill" id="verPill">v1.1.2</span>
+      <span class="verPill" id="verPill">v1.1.3</span>
     </div>
     <div class="hRight">
       <div class="clock" id="clock">--</div>
@@ -233,7 +234,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
   </div>
   <input class="search" id="search" type="search" placeholder="🔍  प्रोडक्ट खोजें…" autocomplete="off">
   <div class="list" id="list"></div>
-  <div class="ver" id="ver">VOICE RATE v1.1.2</div>
+  <div class="ver" id="ver">VOICE RATE v1.1.3</div>
 </div>
 
 <div class="bottomBar" id="bottomBar">
@@ -245,7 +246,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px;pa
 
 <script>
 'use strict';
-const APP_VERSION = 'v1.1.2';
+const APP_VERSION = 'v1.1.3';
 
 // ===================== CORE-START (parsing + matching, no DOM) =====================
 const HI_NUMS = ['एक','दो','तीन','चार','पांच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस','बीस',
@@ -739,7 +740,8 @@ async function sarvamListen(){
     if(IN_APK) showResult(`<span class="rTag miss">माइक की अनुमति चाहिए</span>
       <div class="rOld" style="margin-top:6px">1️⃣ फ़ोन <b class="goldText">Settings → Apps → VOICE RATE → Permissions → Microphone → Allow</b></div>
       <div class="rOld" style="margin-top:4px">2️⃣ Screen recorder या कोई और माइक वाला ऐप चल रहा हो तो बंद करें</div>
-      <div class="rOld" style="margin-top:4px">3️⃣ फिर ऐप बंद करके दोबारा खोलें</div>`);
+      <div class="rOld" style="margin-top:4px">3️⃣ फिर ऐप बंद करके दोबारा खोलें</div>
+      <div class="rOld" style="margin-top:8px;font-size:11px;opacity:.8">Error: ${esc((n||'')+' — '+((e&&e.message)||e))}</div>`);
     return;
   }
   const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
