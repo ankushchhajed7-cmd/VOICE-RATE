@@ -5,6 +5,7 @@ Ankush Kirana ke liye voice rate app. Maalik bolkar product + rate daalta hai. D
 ## Version history
 | Version | Date | Kya hua |
 |---|---|---|
+| v1.2.0 | 26 Nov 2026 | Recording ab MediaRecorder/WebM nahi — AudioContext se kachchi awaaz (PCM) pakadkar 16kHz mono 16-bit WAV banti hai (APK WebView ki WebM Sarvam reject karta tha: "Invalid audio file" 400). Dheemi awaaz auto-boost (max 8x). Sarvam 400/500/net par Sarvam band nahi hota (sirf 401/403/429 par free voice). Sarvam ka asli error card me. Test: Ankush ki asli awaaz (video se) fake mic me → WAV 16k sahi, "साखर पासष्ट रुपये किलो" → साखर ₹65/किलो |
 | v1.1.3 | 26 Nov 2026 | Mic error card me asli error (name + message) — APK mic debug ke liye. apk-factory me MODIFY_AUDIO_SETTINGS add hua (26 Nov 3:32 PM), uske baad wala APK chahiye |
 | v1.1.2 | 26 Nov 2026 | APK me mic error (NotReadable/NotAllowed) par card: Android Settings → Microphone Allow, screen recorder band, app dobara kholo |
 | v1.1.1 | 26 Nov 2026 | APK support: APK me jawab ANVAlert.speak (Android TTS) se; APK me free voice nahi chalti to "Sarvam चालू करें" message; mic error ka asli kaaran (permission / mic busy / not found). apk-factory me runtime mic permission fix (feature-mic-permission) ke saath use karo |
